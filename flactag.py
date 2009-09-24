@@ -26,6 +26,18 @@ import sys
 
 EXIT_SUCCESS, EXIT_FAILURE, EXIT_USAGE = range(3)
 
+class Retry(Exception):
+	pass
+
+class Prev(Exception):
+	pass
+
+class Next(Exception):
+	pass
+
+class GoBack(Exception):
+	pass
+
 # python's readline module has no "history -> list" function
 def get_history():
 	lines = []
@@ -141,61 +153,68 @@ while i < len(files):
 			value = last[tag]
 			fastforward = False
 
-		# append this value if it's not there, so it can be edited
-		added = last_history(value)
+		try:
+			# append this value if it's not there, so it can be edited
+			added = last_history(value)
 
-		# fast forward or prompt for input
-		if fastforward:
-			print "%s %s [%s]: " % (file, tag, value)
-			data = value
-		else:
-			try:
-				data = raw_input("%s %s [%s]: " % (file, tag, value))
-			except KeyboardInterrupt:
-				print
-				print
-				continue
-			except EOFError:
-				print
-				sys.exit(EXIT_SUCCESS)
-
-		# remove the extra value if it got added but not used
-		if added and data != "" and data != value:
-			cut_history(value)
-
-		if data == ".": # skip this item
-			j += 1
-			continue
-		elif data == "!": # go back
-			if j > 0:
-				j -= 1
-				continue
-			elif i > 0:
-				i -= 2
-				j = -1
-				break
+			# fast forward or prompt for input
+			if fastforward:
+				print "%s %s [%s]: " % (file, tag, value)
+				data = value
 			else:
-				continue
-		elif data == "#": # fast forward to first unset file
-			fastforward = True
-			continue
-		elif data == "": # reuse existing/last value
-			data = value
+				try:
+					data = raw_input("%s %s [%s]: " % (file, tag, value))
+				except KeyboardInterrupt:
+					print
+					print
+					raise Retry
+				except EOFError:
+					print
+					sys.exit(EXIT_SUCCESS)
 	
-		if data != "":
-			if data != value:
-				ret = subprocess.Popen(["metaflac", "--remove-tag=%s" % (tag), "--", file]).wait()
-				if ret != 0:
-					sys.exit("metaflac returned %d removing %s from %s" % (ret, tag, file))
+				# remove the extra value if it got added but not used
+				if added and data != "" and data != value:
+					cut_history(value)
+	
+				if data == ".": # skip this item
+					raise Next
+				elif data == "!": # go back
+					if j > 0:
+						raise Prev
+					elif i > 0:
+						raise GoBack
+					else:
+						raise Retry
+				elif data == "#": # fast forward to first unset file
+					fastforward = True
+					continue
+				elif data == "": # reuse existing/last value
+					data = value
+		
+			if data != "":
+				if data != value:
+					ret = subprocess.Popen(["metaflac", "--remove-tag=%s" % (tag), "--", file]).wait()
+					if ret != 0:
+						sys.exit("metaflac returned %d removing %s from %s" % (ret, tag, file))
+	
+					ret = subprocess.Popen(["metaflac", "--set-tag=%s=%s" % (tag, data), "--", file]).wait()
+					if ret != 0:
+						sys.exit("metaflac returned %d setting %s for %s" % (ret, tag, file))
+	
+				last[tag] = data
+			hist[tag] = get_history()
 
-				ret = subprocess.Popen(["metaflac", "--set-tag=%s=%s" % (tag, data), "--", file]).wait()
-				if ret != 0:
-					sys.exit("metaflac returned %d setting %s for %s" % (ret, tag, file))
-
-			last[tag] = data
-		hist[tag] = get_history()
-
-		j += 1
+			raise Next
+		except Retry:
+			continue
+		except Prev:
+			j -= 1
+		except Next:
+			j += 1
+		except GoBack:
+			i -= 2
+			j -= 1
+			break
 
 	# Can't do this at the start of the loop because
 	# we may be going back to the previous file
