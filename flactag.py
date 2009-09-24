@@ -163,7 +163,7 @@ while i < len(files):
 		if added and data != "" and data != value:
 			cut_history(value)
 
-		if data != ".": # skip this item
+		if data == ".": # skip this item
 			j += 1
 			continue
 		elif data == "!": # go back
