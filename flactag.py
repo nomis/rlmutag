@@ -121,45 +121,43 @@ while i < len(files):
 		if added and data != "" and data != value:
 			cut_history(value)
 
-		if data == ".": # skip this item
-			j += 1
-			continue
-		elif data == "!": # go back
-			if j > 0:
-				j -= 1
+		if data != ".": # skip this item
+			if data == "!": # go back
+				if j > 0:
+					j -= 1
+					continue
+				elif i > 0:
+					i -= 2
+					j = -1
+					break
+				else:
+					continue
+			elif data == "#": # fast forward to first unset file
+				fastforward = True
 				continue
-			elif i > 0:
-				i -= 2
-				j = -1
-				break
-			else:
-				continue
-		elif data == "#": # fast forward to first unset file
-			fastforward = True
-			continue
-		elif data == "": # reuse existing/last value
-			data = value
+			elif data == "": # reuse existing/last value
+				data = value
 		
-		if data != "":
-			if data != value:
-				ret = subprocess.Popen(["metaflac", "--remove-tag=%s" % (tag), "--", file]).wait()
-				if ret != 0:
-					sys.exit("metaflac returned %d removing %s from %s" % (ret, tag, file))
+			if data != "":
+				if data != value:
+					ret = subprocess.Popen(["metaflac", "--remove-tag=%s" % (tag), "--", file]).wait()
+					if ret != 0:
+						sys.exit("metaflac returned %d removing %s from %s" % (ret, tag, file))
 
-				ret = subprocess.Popen(["metaflac", "--set-tag=%s=%s" % (tag, data), "--", file]).wait()
-				if ret != 0:
-					sys.exit("metaflac returned %d setting %s for %s" % (ret, tag, file))
+					ret = subprocess.Popen(["metaflac", "--set-tag=%s=%s" % (tag, data), "--", file]).wait()
+					if ret != 0:
+						sys.exit("metaflac returned %d setting %s for %s" % (ret, tag, file))
 
-			last[tag] = data
-		hist[tag] = get_history()
+				last[tag] = data
+			hist[tag] = get_history()
 
 		j += 1
 
-		# Can't do this at the start of the outer
-		# loop because we may be resuming an i--
-		if j == len(tags):
-			j = 0
-			break
+	# Can't do this at the start of the loop because
+	# we may be going back to the previous file
+	if j == len(tags):
+		j = 0
+
 	print
 	i += 1
 
