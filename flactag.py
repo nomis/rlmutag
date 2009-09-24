@@ -30,12 +30,14 @@ if len(sys.argv) < 2:
 	print "Usage: %s <tag> [tag] [tag]" % (sys.argv[0])
 	sys.exit(EXIT_USAGE)
 
+# python's readline module has no "history -> list" function
 def get_history():
 	lines = []
 	for i in range(1, readline.get_current_history_length() + 1):
 		lines.append(readline.get_history_item(i))
 	return lines
 
+# python's readline module has no "list -> history" function
 def set_history(lines):
 	readline.clear_history()
 	for line in lines:
@@ -51,6 +53,7 @@ def last_history(line):
 def cut_history(line):
 	if readline.get_current_history_length() > 0 \
 			and readline.get_history_item(readline.get_current_history_length()) == line:
+		# not a mistake, getting is 1+, removing is 0+ ...
 		readline.remove_history_item(readline.get_current_history_length() - 1)
 
 tags = sys.argv[1:]
@@ -59,6 +62,9 @@ hist = {}
 
 files = []
 for file in os.listdir(os.getcwd()):
+	# filter out links and non-files
+	#  (this must be done in advance  or the "go back to
+	#    previous file" process will not work properly)
 	if not os.path.islink(file) and os.path.isfile(file):
 		files.append(file)
 files.sort()
@@ -81,9 +87,12 @@ while i < len(files):
 			sys.exit("metaflac returned %d getting %s from %s" % (ret, tag, file))
 
 		if value:
+			# remove the tag name prefix, and only us the first value
 			value = value.splitlines()[0].partition("%s=" % (tag))[2]
 		elif tag in last:
 			value = last[tag]
+
+		# append this value if it's not there, so it can be edited
 		added = last_history(value)
 
 		try:
@@ -95,13 +104,14 @@ while i < len(files):
 			print
 			sys.exit(EXIT_SUCCESS)
 
+		# remove the extra value if it got added but not used
 		if added and data != "" and data != value:
 			cut_history(value)
 
-		if data == ".":
+		if data == ".": # skip this item
 			j += 1
 			continue
-		elif data == "!":
+		elif data == "!": # go back
 			if j > 0:
 				j -= 1
 				continue
@@ -126,6 +136,9 @@ while i < len(files):
 		hist[tag] = get_history()
 
 		j += 1
+
+		# Can't do this at the start of the outer
+		# loop because we may be resuming an i--
 		if j == len(tags):
 			j = 0
 			break
