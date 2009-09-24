@@ -69,6 +69,7 @@ for file in os.listdir(os.getcwd()):
 		files.append(file)
 files.sort()
 
+fastforward = False
 i = 0
 j = 0
 while i < len(files):
@@ -91,19 +92,25 @@ while i < len(files):
 			value = value.splitlines()[0].partition("%s=" % (tag))[2]
 		elif tag in last:
 			value = last[tag]
+			fastforward = False
 
 		# append this value if it's not there, so it can be edited
 		added = last_history(value)
 
-		try:
-			data = raw_input("%s %s [%s]: " % (file, tag, value))
-		except KeyboardInterrupt:
-			print
-			print
-			continue
-		except EOFError:
-			print
-			sys.exit(EXIT_SUCCESS)
+		# fast forward or prompt for input
+		if fastforward:
+			print "%s %s [%s]: " % (file, tag, value)
+			data = value
+		else:
+			try:
+				data = raw_input("%s %s [%s]: " % (file, tag, value))
+			except KeyboardInterrupt:
+				print
+				print
+				continue
+			except EOFError:
+				print
+				sys.exit(EXIT_SUCCESS)
 
 		# remove the extra value if it got added but not used
 		if added and data != "" and data != value:
@@ -122,6 +129,9 @@ while i < len(files):
 				break
 			else:
 				continue
+		elif data == "#": # fast forward to first unset file
+			fastforward = True
+			continue
 		elif data == "": # reuse existing/last value
 			data = value
 		
