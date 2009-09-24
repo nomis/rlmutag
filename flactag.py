@@ -89,7 +89,7 @@ while i < len(files):
 		if ret != 0:
 			sys.exit("metaflac returned %d getting %s from %s" % (ret, tag, file))
 
-		if value:
+		if value != "":
 			# remove the tag name prefix, and only us the first value
 			value = value.splitlines()[0].partition("%s=" % (tag))[2]
 		elif tag in last:
