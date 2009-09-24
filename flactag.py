@@ -74,6 +74,8 @@ i = 0
 j = 0
 while i < len(files):
 	file = files[i]
+	if j == -1:
+		j = len(tags) - 1
 	while j < len(tags):
 		tag = tags[j]
 		if tag in hist:
@@ -125,7 +127,7 @@ while i < len(files):
 				continue
 			elif i > 0:
 				i -= 2
-				j = len(tags) - 1
+				j = -1
 				break
 			else:
 				continue
