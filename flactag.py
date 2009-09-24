@@ -45,15 +45,17 @@ def set_history(lines):
 		readline.add_history(line)
 
 def last_history(line):
-	if readline.get_current_history_length() == 0 \
-			or readline.get_history_item(readline.get_current_history_length()) != line:
+	if (readline.get_current_history_length() == 0
+			or readline.get_history_item(
+				readline.get_current_history_length()) != line):
 		readline.add_history(line)
 		return True
 	return False
 
 def cut_history(line):
-	if readline.get_current_history_length() > 0 \
-			and readline.get_history_item(readline.get_current_history_length()) == line:
+	if (readline.get_current_history_length() > 0
+			and readline.get_history_item(
+				readline.get_current_history_length()) == line):
 		# not a mistake, getting is 1+, removing is 0+ ...
 		readline.remove_history_item(readline.get_current_history_length() - 1)
 
