@@ -45,6 +45,13 @@ def last_history(line):
 	if readline.get_current_history_length() == 0 \
 			or readline.get_history_item(readline.get_current_history_length()) != line:
 		readline.add_history(line)
+		return True
+	return False
+
+def cut_history(line):
+	if readline.get_current_history_length() > 0 \
+			and readline.get_history_item(readline.get_current_history_length()) == line:
+		readline.remove_history_item(readline.get_current_history_length() - 1)
 
 tags = sys.argv[1:]
 last = {}
@@ -77,7 +84,7 @@ while i < len(files):
 			value = value.splitlines()[0].partition("%s=" % (tag))[2]
 		elif tag in last:
 			value = last[tag]
-		last_history(value)
+		added = last_history(value)
 
 		try:
 			data = raw_input("%s %s [%s]: " % (file, tag, value))
@@ -87,6 +94,9 @@ while i < len(files):
 		except EOFError:
 			print
 			sys.exit(EXIT_SUCCESS)
+
+		if added:
+			cut_history(value)
 
 		if data == ".":
 			j += 1
