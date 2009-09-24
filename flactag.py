@@ -26,11 +26,6 @@ import sys
 
 EXIT_SUCCESS, EXIT_FAILURE, EXIT_USAGE = range(3)
 
-if len(sys.argv) < 2 or (len(sys.argv) == 2 and sys.argv[1] == "--"):
-	print "Usage: %s <tag> [tag...] [-- <file> [file...]]" % (sys.argv[0])
-	print "       %s -- <file> [file...]" % (sys.argv[0])
-	sys.exit(EXIT_USAGE)
-
 # python's readline module has no "history -> list" function
 def get_history():
 	lines = []
@@ -58,6 +53,11 @@ def cut_history(line):
 				readline.get_current_history_length()) == line):
 		# not a mistake, getting is 1+, removing is 0+ ...
 		readline.remove_history_item(readline.get_current_history_length() - 1)
+
+if len(sys.argv) < 2 or (len(sys.argv) == 2 and sys.argv[1] == "--"):
+	print "Usage: %s <tag> [tag...] [-- <file> [file...]]" % (sys.argv[0])
+	print "       %s -- <file> [file...]" % (sys.argv[0])
+	sys.exit(EXIT_USAGE)
 
 args = sys.argv[1:]
 try:
