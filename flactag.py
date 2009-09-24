@@ -99,7 +99,8 @@ while i < len(files):
 			data = raw_input("%s %s [%s]: " % (file, tag, value))
 		except KeyboardInterrupt:
 			print
-			sys.exit(EXIT_SUCCESS)
+			print
+			continue
 		except EOFError:
 			print
 			sys.exit(EXIT_SUCCESS)
