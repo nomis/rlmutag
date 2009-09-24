@@ -26,8 +26,9 @@ import sys
 
 EXIT_SUCCESS, EXIT_FAILURE, EXIT_USAGE = range(3)
 
-if len(sys.argv) < 2:
-	print "Usage: %s <tag> [tag] [tag]" % (sys.argv[0])
+if len(sys.argv) < 2 or (len(sys.argv) == 2 and sys.argv[1] == "--"):
+	print "Usage: %s <tag> [tag...] [-- <file> [file...]]" % (sys.argv[0])
+	print "       %s -- <file> [file...]" % (sys.argv[0])
 	sys.exit(EXIT_USAGE)
 
 # python's readline module has no "history -> list" function
@@ -56,24 +57,63 @@ def cut_history(line):
 		# not a mistake, getting is 1+, removing is 0+ ...
 		readline.remove_history_item(readline.get_current_history_length() - 1)
 
-tags = sys.argv[1:]
+args = sys.argv[1:]
+try:
+	split = args.index("--")
+	files = args[split+1:]
+	args = args[:split]
+except ValueError:
+
+	files = []
+	for file in os.listdir(os.getcwd()):
+		# filter out links and non-files
+		#  (this must be done in advance  or the "go back to
+		#    previous file" process will not work properly)
+		if not os.path.islink(file) and os.path.isfile(file):
+			files.append(file)
+	files.sort()
+
+auto_tags = len(args) == 0
+if not auto_tags:
+	tags = []
+	uniq = set()
+	for tag in args:
+		# metaflac allows an empty tag to be set... but can't show or remove it
+		if tag != "" and tag not in uniq:
+			uniq.add(tag)
+			tags.append(tag)
+	uniq = None
+
 last = {}
 hist = {}
-
-files = []
-for file in os.listdir(os.getcwd()):
-	# filter out links and non-files
-	#  (this must be done in advance  or the "go back to
-	#    previous file" process will not work properly)
-	if not os.path.islink(file) and os.path.isfile(file):
-		files.append(file)
-files.sort()
-
 fastforward = False
 i = 0
 j = 0
 while i < len(files):
 	file = files[i]
+
+	if auto_tags:
+		# enumerate all tags in the file, excluding replaygain
+		tags = []
+		uniq = set()
+		get_tags = subprocess.Popen(["metaflac", "--export-tags-to=-", "--", file], stdout=subprocess.PIPE)
+		value = get_tags.communicate()[0]
+		ret = get_tags.wait()
+		if ret != 0:
+			sys.exit("metaflac returned %d getting tags from %s" % (ret, file))
+
+		for value in value.splitlines():
+			tag = value.split("=", 2)[0]
+			# metaflac allows an empty tag to be set... but can't show or remove it
+			if tag != "" and not tag in uniq and not tag.startswith("REPLAYGAIN_"):
+				uniq.add(tag)
+				tags.append(tag)
+		uniq = None
+
+	# skip files with no tags
+	if len(tags) == 0:
+		i += 1
+		continue
 
 	# if going back to previous file, use the last tag
 	if j == -1:
