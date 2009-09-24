@@ -122,7 +122,7 @@ while i < len(files):
 				break
 			else:
 				continue
-		elif data == "":
+		elif data == "": # reuse existing/last value
 			data = value
 		
 		if data != "":
