@@ -83,7 +83,7 @@ while i < len(files):
 		else:
 			set_history([])
 
-		get_tags = subprocess.Popen(["metaflac", "--show-tag=%s" % (tag), file], stdout=subprocess.PIPE)
+		get_tags = subprocess.Popen(["metaflac", "--show-tag=%s" % (tag), "--", file], stdout=subprocess.PIPE)
 		value = get_tags.communicate()[0]
 		ret = get_tags.wait()
 		if ret != 0:
@@ -139,10 +139,11 @@ while i < len(files):
 		
 		if data != "":
 			if data != value:
-				ret = subprocess.Popen(["metaflac", "--remove-tag=%s" % (tag), file]).wait()
+				ret = subprocess.Popen(["metaflac", "--remove-tag=%s" % (tag), "--", file]).wait()
 				if ret != 0:
 					sys.exit("metaflac returned %d removing %s from %s" % (ret, tag, file))
-				ret = subprocess.Popen(["metaflac", "--set-tag=%s=%s" % (tag, data), file]).wait()
+
+				ret = subprocess.Popen(["metaflac", "--set-tag=%s=%s" % (tag, data), "--", file]).wait()
 				if ret != 0:
 					sys.exit("metaflac returned %d setting %s for %s" % (ret, tag, file))
 
