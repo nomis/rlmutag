@@ -162,34 +162,36 @@ while i < len(files):
 			cut_history(value)
 
 		if data != ".": # skip this item
-			if data == "!": # go back
-				if j > 0:
-					j -= 1
-					continue
-				elif i > 0:
-					i -= 2
-					j = -1
-					break
-				else:
-					continue
-			elif data == "#": # fast forward to first unset file
-				fastforward = True
+			j += 1
+			continue
+		elif data == "!": # go back
+			if j > 0:
+				j -= 1
 				continue
-			elif data == "": # reuse existing/last value
-				data = value
-		
-			if data != "":
-				if data != value:
-					ret = subprocess.Popen(["metaflac", "--remove-tag=%s" % (tag), "--", file]).wait()
-					if ret != 0:
-						sys.exit("metaflac returned %d removing %s from %s" % (ret, tag, file))
+			elif i > 0:
+				i -= 2
+				j = -1
+				break
+			else:
+				continue
+		elif data == "#": # fast forward to first unset file
+			fastforward = True
+			continue
+		elif data == "": # reuse existing/last value
+			data = value
+	
+		if data != "":
+			if data != value:
+				ret = subprocess.Popen(["metaflac", "--remove-tag=%s" % (tag), "--", file]).wait()
+				if ret != 0:
+					sys.exit("metaflac returned %d removing %s from %s" % (ret, tag, file))
 
-					ret = subprocess.Popen(["metaflac", "--set-tag=%s=%s" % (tag, data), "--", file]).wait()
-					if ret != 0:
-						sys.exit("metaflac returned %d setting %s for %s" % (ret, tag, file))
+				ret = subprocess.Popen(["metaflac", "--set-tag=%s=%s" % (tag, data), "--", file]).wait()
+				if ret != 0:
+					sys.exit("metaflac returned %d setting %s for %s" % (ret, tag, file))
 
-				last[tag] = data
-			hist[tag] = get_history()
+			last[tag] = data
+		hist[tag] = get_history()
 
 		j += 1
 
