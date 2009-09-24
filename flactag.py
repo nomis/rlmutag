@@ -95,7 +95,7 @@ while i < len(files):
 			print
 			sys.exit(EXIT_SUCCESS)
 
-		if added:
+		if added and data != "" and data != value:
 			cut_history(value)
 
 		if data == ".":
@@ -113,7 +113,6 @@ while i < len(files):
 				continue
 		elif data == "":
 			data = value
-			last_history(data)
 		
 		if data != "":
 			ret = subprocess.Popen(["metaflac", "--remove-tag=%s" % (tag), file]).wait()
