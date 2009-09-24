@@ -74,8 +74,11 @@ i = 0
 j = 0
 while i < len(files):
 	file = files[i]
+
+	# if going back to previous file, use the last tag
 	if j == -1:
 		j = len(tags) - 1
+
 	while j < len(tags):
 		tag = tags[j]
 		if tag in hist:
