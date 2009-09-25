@@ -77,7 +77,6 @@ try:
 	files = args[split+1:]
 	args = args[:split]
 except ValueError:
-
 	files = []
 	for file in os.listdir(os.getcwd()):
 		# filter out links and non-files
@@ -98,7 +97,7 @@ if not auto_tags:
 		if tag != "" and tag not in uniq:
 			uniq.add(tag)
 			tags.append(tag)
-	uniq = None
+	del uniq
 
 last = {}
 hist = {}
@@ -124,7 +123,7 @@ while i < len(files):
 			if tag != "" and not tag in uniq and not tag.startswith("REPLAYGAIN_"):
 				uniq.add(tag)
 				tags.append(tag)
-		uniq = None
+		del uniq
 
 	# skip files with no tags
 	if len(tags) == 0:
