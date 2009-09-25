@@ -52,6 +52,8 @@ def set_history(lines):
 		readline.add_history(line)
 
 def last_history(line):
+	if line == "":
+		return False
 	if (readline.get_current_history_length() == 0
 			or readline.get_history_item(
 				readline.get_current_history_length()) != line):
@@ -150,9 +152,11 @@ while i < len(files):
 		if value != "":
 			# remove the tag name prefix, and only us the first value
 			value = value.splitlines()[0].partition("%s=" % (tag))[2]
-		elif tag in last:
-			value = last[tag]
+
+		if value == None or value == "":
 			fastforward = False
+			if tag in last:
+				value = last[tag]
 
 		try:
 			# append this value if it's not there, so it can be edited
@@ -179,29 +183,32 @@ while i < len(files):
 	
 				if data == ".": # skip this item
 					raise Next
-				elif data == "!": # go back
+				elif data == "<": # go back
 					if j > 0:
 						raise Prev
 					elif i > 0:
 						raise GoBack
 					else:
 						raise Retry
-				elif data == "#": # fast forward to first unset file
+				elif data == "*": # fast forward to first unset file
 					fastforward = True
 					continue
+				elif data == "#": # unset
+					data = ""
 				elif data == "": # reuse existing/last value
 					data = value
 		
-			if data != "":
-				if data != value:
-					ret = subprocess.Popen(["metaflac", "--remove-tag=%s" % (tag), "--", file]).wait()
-					if ret != 0:
-						sys.exit("metaflac returned %d removing %s from %s" % (ret, tag, file))
-	
+			if data != value:
+				ret = subprocess.Popen(["metaflac", "--remove-tag=%s" % (tag), "--", file]).wait()
+				if ret != 0:
+					sys.exit("metaflac returned %d removing %s from %s" % (ret, tag, file))
+
+				if data != "":
 					ret = subprocess.Popen(["metaflac", "--set-tag=%s=%s" % (tag, data), "--", file]).wait()
 					if ret != 0:
 						sys.exit("metaflac returned %d setting %s for %s" % (ret, tag, file))
 	
+			if data != "":
 				last[tag] = data
 			hist[tag] = get_history()
 
