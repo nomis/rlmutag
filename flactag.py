@@ -151,7 +151,7 @@ while i < len(files):
 			# remove the tag name prefix, and only us the first value
 			value = value.splitlines()[0].partition("%s=" % (tag))[2]
 
-		if value == None or value == "":
+		if value == "":
 			fastforward = False
 			if tag in last:
 				value = last[tag]
