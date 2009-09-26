@@ -27,9 +27,6 @@ import sys
 
 EXIT_SUCCESS, EXIT_FAILURE, EXIT_USAGE = range(3)
 
-class Retry(Exception):
-	pass
-
 class Prev(Exception):
 	pass
 
@@ -169,8 +166,7 @@ while i < len(files):
 					data = raw_input("%s %s [%s]: " % (file, tag, value))
 				except KeyboardInterrupt:
 					print()
-					print()
-					raise Retry
+					sys.exit(EXIT_SUCCESS)
 				except EOFError:
 					print()
 					sys.exit(EXIT_SUCCESS)
@@ -206,8 +202,6 @@ while i < len(files):
 			hist[tag] = get_history()
 
 			raise Next
-		except Retry:
-			continue
 		except Prev:
 			if j > 0:
 				j -= 1
