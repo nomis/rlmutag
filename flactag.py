@@ -77,8 +77,8 @@ except ValueError:
 	files = []
 	for file in os.listdir(os.getcwd()):
 		# filter out links and non-files
-		#  (this must be done in advance  or the "go back to
-		#    previous file" process will not work properly)
+		#   this must be done in advance or the "go back to
+		#   previous file" process will not work properly
 		if (not os.path.islink(file)
 				and os.path.isfile(file)
 				and file.endswith(".flac")):
