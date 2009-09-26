@@ -36,9 +36,6 @@ class Prev(Exception):
 class Next(Exception):
 	pass
 
-class GoBack(Exception):
-	pass
-
 # python's readline module has no "history -> list" function
 def get_history():
 	lines = []
@@ -185,12 +182,7 @@ while i < len(files):
 				if data == ".": # skip this item
 					raise Next
 				elif data == "<": # go back
-					if j > 0:
-						raise Prev
-					elif i > 0:
-						raise GoBack
-					else:
-						raise Retry
+					raise Prev
 				elif data == "*": # fast forward to first unset file
 					fastforward = True
 					continue
@@ -217,13 +209,14 @@ while i < len(files):
 		except Retry:
 			continue
 		except Prev:
-			j -= 1
+			if j > 0:
+				j -= 1
+			elif i > 0:
+				i -= 2
+				j = -1
+				break
 		except Next:
 			j += 1
-		except GoBack:
-			i -= 2
-			j -= 1
-			break
 
 	# Can't do this at the start of the loop because
 	# we may be going back to the previous file
