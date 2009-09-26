@@ -19,6 +19,7 @@
 #	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #	Or, point your browser to http://www.gnu.org/copyleft/gpl.html
 
+from __future__ import print_function
 import os
 import readline
 import subprocess
@@ -69,8 +70,8 @@ def cut_history(line):
 		readline.remove_history_item(readline.get_current_history_length() - 1)
 
 if len(sys.argv) < 2 or (len(sys.argv) == 2 and sys.argv[1] == "--"):
-	print "Usage: %s <tag> [tag...] [-- <file> [file...]]" % (sys.argv[0])
-	print "       %s -- <file> [file...]" % (sys.argv[0])
+	print("Usage: %s <tag> [tag...] [-- <file> [file...]]" % (sys.argv[0]))
+	print("       %s -- <file> [file...]" % (sys.argv[0]))
 	sys.exit(EXIT_USAGE)
 
 args = sys.argv[1:]
@@ -144,7 +145,7 @@ while i < len(files):
 			set_history([])
 
 		get_tags = subprocess.Popen(["metaflac", "--show-tag=%s" % (tag), "--", file], stdout=subprocess.PIPE)
-		value = get_tags.communicate()[0]
+		value = get_tags.communicate()[0].decode()
 		ret = get_tags.wait()
 		if ret != 0:
 			sys.exit("metaflac returned %d getting %s from %s" % (ret, tag, file))
@@ -164,17 +165,17 @@ while i < len(files):
 
 			# fast forward or prompt for input
 			if fastforward:
-				print "%s %s [%s]: " % (file, tag, value)
+				print("%s %s [%s]: " % (file, tag, value))
 				data = value
 			else:
 				try:
 					data = raw_input("%s %s [%s]: " % (file, tag, value))
 				except KeyboardInterrupt:
-					print
-					print
+					print()
+					print()
 					raise Retry
 				except EOFError:
-					print
+					print()
 					sys.exit(EXIT_SUCCESS)
 	
 				# remove the extra value if it got added but not used
@@ -229,7 +230,7 @@ while i < len(files):
 	if j == len(tags):
 		j = 0
 
-	print
+	print()
 	i += 1
 
 sys.exit(EXIT_SUCCESS)
