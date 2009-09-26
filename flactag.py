@@ -33,6 +33,9 @@ class Prev(Exception):
 class Next(Exception):
 	pass
 
+class FastForward(Exception):
+	pass
+
 # python's readline module has no "history -> list" function
 def get_history():
 	lines = []
@@ -175,17 +178,16 @@ while i < len(files):
 				if added and data != "" and data != value:
 					cut_history(value)
 	
-				if data == ".": # skip this item
-					raise Next
-				elif data == "<": # go back
-					raise Prev
-				elif data == "*": # fast forward to first unset file
-					fastforward = True
-					continue
-				elif data == "#": # unset
-					data = ""
-				elif data == "": # reuse existing/last value
+				if data == "":
 					data = value
+				elif data == "#":
+					data = ""
+				elif data == "<":
+					raise Prev
+				elif data == ".":
+					raise Next
+				elif data == "*":
+					raise FastForward
 		
 			if data != value:
 				ret = subprocess.Popen(["metaflac", "--remove-tag=%s" % (tag), "--", file]).wait()
@@ -211,6 +213,8 @@ while i < len(files):
 				break
 		except Next:
 			j += 1
+		except FastForward:
+			fastforward = True
 
 	# Can't do this at the start of the loop because
 	# we may be going back to the previous file
