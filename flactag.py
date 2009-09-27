@@ -117,8 +117,7 @@ while i < len(files):
 		if ret != 0:
 			sys.exit("metaflac returned %d getting tags from %s" % (ret, file))
 
-		for value in value.splitlines():
-			tag = value.split("=", 2)[0]
+		for tag in [value.split("=", 2)[0] for value in value.splitlines()]:
 			# metaflac allows an empty tag to be set... but can't show or remove it
 			if tag != "" and not tag in uniq and not tag.startswith("REPLAYGAIN_"):
 				uniq.add(tag)
