@@ -28,14 +28,9 @@ import sys
 EXIT_SUCCESS, EXIT_FAILURE, EXIT_USAGE = range(3)
 PROMPT = "{file} {tag} [{value}]: "
 
-class Prev(Exception):
-	pass
-
-class Next(Exception):
-	pass
-
-class FastForward(Exception):
-	pass
+class Prev(Exception): pass
+class Next(Exception): pass
+class FastForward(Exception): pass
 
 # python's readline module has no "history -> list" function
 def get_history():
