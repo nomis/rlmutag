@@ -210,7 +210,7 @@ while i < len(files):
 			except Prev:
 				if j > 0:
 					j -= 1
-				elif i > 0:
+				else:
 					raise Prev
 			except Next:
 				j += 1
@@ -227,8 +227,9 @@ while i < len(files):
 		raise Next
 	except Prev:
 		print()
-		i -= 1
-		j = -1
+		if i > 0:
+			i -= 1
+			j = -1
 	except Next:	
 		print()
 		i += 1
