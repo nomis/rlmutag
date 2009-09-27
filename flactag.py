@@ -26,6 +26,7 @@ import subprocess
 import sys
 
 EXIT_SUCCESS, EXIT_FAILURE, EXIT_USAGE = range(3)
+PROMPT = "{file} {tag} [{value}]: "
 
 class Prev(Exception):
 	pass
@@ -66,9 +67,17 @@ def cut_history(line):
 		# not a mistake, getting is 1+, removing is 0+ ...
 		readline.remove_history_item(readline.get_current_history_length() - 1)
 
+def check(**args):
+	if args["ret"] != 0:
+		if "tag" in args:
+			print("{name} returned {ret} for {file} when {action} tag {tag}".format(**args))
+		else:
+			print("{name} returned {ret} for {file} when {action}".format(**args))
+		sys.exit(EXIT_FAILURE)
+
 if len(sys.argv) < 2 or (len(sys.argv) == 2 and sys.argv[1] == "--"):
-	print("Usage: %s <tag> [tag...] [-- <file> [file...]]" % (sys.argv[0]))
-	print("       %s -- <file> [file...]" % (sys.argv[0]))
+	print("Usage: {0} <tag> [tag...] [-- <file> [file...]]".format(sys.argv[0]))
+	print("       {0} -- <file> [file...]".format(sys.argv[0]))
 	sys.exit(EXIT_USAGE)
 
 args = sys.argv[1:]
@@ -114,8 +123,7 @@ while i < len(files):
 		get_tags = subprocess.Popen(["metaflac", "--export-tags-to=-", "--", file], stdout=subprocess.PIPE)
 		value = get_tags.communicate()[0]
 		ret = get_tags.wait()
-		if ret != 0:
-			sys.exit("metaflac returned %d getting tags from %s" % (ret, file))
+		check(name="metaflac", ret=ret, action="listing tags", file=file)
 
 		for tag in [value.split("=", 2)[0] for value in value.splitlines()]:
 			# metaflac allows an empty tag to be set... but can't show or remove it
@@ -140,15 +148,14 @@ while i < len(files):
 		else:
 			set_history([])
 
-		get_tags = subprocess.Popen(["metaflac", "--show-tag=%s" % (tag), "--", file], stdout=subprocess.PIPE)
+		get_tags = subprocess.Popen(["metaflac", "--show-tag={tag}".format(tag=tag), "--", file], stdout=subprocess.PIPE)
 		value = get_tags.communicate()[0].decode()
 		ret = get_tags.wait()
-		if ret != 0:
-			sys.exit("metaflac returned %d getting %s from %s" % (ret, tag, file))
+		check(name="metaflac", ret=ret, action="getting", tag=tag, file=file)
 
 		if value != "":
 			# remove the tag name prefix, and only us the first value
-			value = value.splitlines()[0].partition("%s=" % (tag))[2]
+			value = value.splitlines()[0].partition("{tag}=".format(tag=tag))[2]
 
 		if value == "":
 			fastforward = False
@@ -161,11 +168,11 @@ while i < len(files):
 
 			# fast forward or prompt for input
 			if fastforward:
-				print("%s %s [%s]: " % (file, tag, value))
+				print(PROMPT.format(file=file, tag=tag, value=value))
 				data = value
 			else:
 				try:
-					data = raw_input("%s %s [%s]: " % (file, tag, value))
+					data = raw_input(PROMPT.format(file=file, tag=tag, value=value))
 				except KeyboardInterrupt:
 					print()
 					sys.exit(EXIT_SUCCESS)
@@ -189,14 +196,12 @@ while i < len(files):
 					raise FastForward
 		
 			if data != value:
-				ret = subprocess.Popen(["metaflac", "--remove-tag=%s" % (tag), "--", file]).wait()
-				if ret != 0:
-					sys.exit("metaflac returned %d removing %s from %s" % (ret, tag, file))
+				ret = subprocess.Popen(["metaflac", "--remove-tag={tag}".format(tag=tag), "--", file]).wait()
+				check(name="metaflac", ret=ret, action="removing", tag=tag, file=file)
 
 				if data != "":
-					ret = subprocess.Popen(["metaflac", "--set-tag=%s=%s" % (tag, data), "--", file]).wait()
-					if ret != 0:
-						sys.exit("metaflac returned %d setting %s for %s" % (ret, tag, file))
+					ret = subprocess.Popen(["metaflac", "--set-tag={tag}={data}".format(tag=tag, data=data), "--", file]).wait()
+					check(name="metaflac", ret=ret, action="setting", tag=tag, file=file)
 	
 			if data != "":
 				last[tag] = data
