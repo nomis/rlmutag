@@ -219,11 +219,6 @@ while i < len(files):
 			else:
 				raise AssertionError
 	
-		# Can't do this at the start of the loop because
-		# we may be going back to the previous file
-		if j == len(tags):
-			j = 0
-
 		raise Next
 	except Prev:
 		print()
@@ -233,6 +228,7 @@ while i < len(files):
 	except Next:	
 		print()
 		i += 1
+		j = 0
 	else:
 		raise AssertionError
 	
