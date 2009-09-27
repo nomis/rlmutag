@@ -132,100 +132,107 @@ while i < len(files):
 				tags.append(tag)
 		del uniq
 
-	# skip files with no tags
-	if len(tags) == 0:
-		i += 1
-		continue
-
-	# if going back to previous file, use the last tag
-	if j == -1:
-		j = len(tags) - 1
-
-	while j < len(tags):
-		tag = tags[j]
-		if tag in hist:
-			set_history(hist[tag])
-		else:
-			set_history([])
-
-		get_tags = subprocess.Popen(["metaflac", "--show-tag={tag}".format(tag=tag), "--", file], stdout=subprocess.PIPE)
-		value = get_tags.communicate()[0].decode()
-		ret = get_tags.wait()
-		check(name="metaflac", ret=ret, action="getting", tag=tag, file=file)
-
-		if value != "":
-			# remove the tag name prefix, and only us the first value
-			value = value.splitlines()[0].partition("{tag}=".format(tag=tag))[2]
-
-		if value == "":
-			fastforward = False
-			if tag in last:
-				value = last[tag]
-
-		try:
-			# append this value if it's not there, so it can be edited
-			added = last_history(value)
-
-			# fast forward or prompt for input
-			if fastforward:
-				print(PROMPT.format(file=file, tag=tag, value=value))
-				data = value
-			else:
-				try:
-					data = raw_input(PROMPT.format(file=file, tag=tag, value=value))
-				except KeyboardInterrupt:
-					print()
-					sys.exit(EXIT_SUCCESS)
-				except EOFError:
-					print()
-					sys.exit(EXIT_SUCCESS)
-	
-				# remove the extra value if it got added but not used
-				if added and data != "" and data != value:
-					cut_history(value)
-	
-				if data == "":
-					data = value
-				elif data == "#":
-					data = ""
-				elif data == "<":
-					raise Prev
-				elif data == ".":
-					raise Next
-				elif data == "*":
-					raise FastForward
-		
-			if data != value:
-				ret = subprocess.Popen(["metaflac", "--remove-tag={tag}".format(tag=tag), "--", file]).wait()
-				check(name="metaflac", ret=ret, action="removing", tag=tag, file=file)
-
-				if data != "":
-					ret = subprocess.Popen(["metaflac", "--set-tag={tag}={data}".format(tag=tag, data=data), "--", file]).wait()
-					check(name="metaflac", ret=ret, action="setting", tag=tag, file=file)
-	
-			if data != "":
-				last[tag] = data
-			hist[tag] = get_history()
-
+	try:
+		# skip files with no tags
+		if len(tags) == 0:
 			raise Next
-		except Prev:
-			if j > 0:
-				j -= 1
-			elif i > 0:
-				i -= 2
-				j = -1
-				break
-		except Next:
-			j += 1
-		except FastForward:
-			fastforward = True
+	
+		# if going back to previous file, use the last tag
+		if j == -1:
+			j = len(tags) - 1
+	
+		while j < len(tags):
+			tag = tags[j]
+			if tag in hist:
+				set_history(hist[tag])
+			else:
+				set_history([])
+	
+			get_tags = subprocess.Popen(["metaflac", "--show-tag={tag}".format(tag=tag), "--", file], stdout=subprocess.PIPE)
+			value = get_tags.communicate()[0].decode()
+			ret = get_tags.wait()
+			check(name="metaflac", ret=ret, action="getting", tag=tag, file=file)
+	
+			if value != "":
+				# remove the tag name prefix, and only us the first value
+				value = value.splitlines()[0].partition("{tag}=".format(tag=tag))[2]
+	
+			if value == "":
+				fastforward = False
+				if tag in last:
+					value = last[tag]
+			try:
+				# append this value if it's not there, so it can be edited
+				added = last_history(value)
+	
+				# fast forward or prompt for input
+				if fastforward:
+					print(PROMPT.format(file=file, tag=tag, value=value))
+					data = value
+				else:
+					try:
+						data = raw_input(PROMPT.format(file=file, tag=tag, value=value))
+					except KeyboardInterrupt:
+						print()
+						sys.exit(EXIT_SUCCESS)
+					except EOFError:
+						print()
+						sys.exit(EXIT_SUCCESS)
+		
+					# remove the extra value if it got added but not used
+					if added and data != "" and data != value:
+						cut_history(value)
+		
+					if data == "":
+						data = value
+					elif data == "#":
+						data = ""
+					elif data == "<":
+						raise Prev
+					elif data == ".":
+						raise Next
+					elif data == "*":
+						raise FastForward
+			
+				if data != value:
+					ret = subprocess.Popen(["metaflac", "--remove-tag={tag}".format(tag=tag), "--", file]).wait()
+					check(name="metaflac", ret=ret, action="removing", tag=tag, file=file)
+	
+					if data != "":
+						ret = subprocess.Popen(["metaflac", "--set-tag={tag}={data}".format(tag=tag, data=data), "--", file]).wait()
+						check(name="metaflac", ret=ret, action="setting", tag=tag, file=file)
+		
+				if data != "":
+					last[tag] = data
+				hist[tag] = get_history()
+	
+				raise Next
+			except Prev:
+				if j > 0:
+					j -= 1
+				elif i > 0:
+					raise Prev
+			except Next:
+				j += 1
+			except FastForward:
+				fastforward = True
+			else:
+				raise AssertionError
+	
+		# Can't do this at the start of the loop because
+		# we may be going back to the previous file
+		if j == len(tags):
+			j = 0
 
-	# Can't do this at the start of the loop because
-	# we may be going back to the previous file
-	if j == len(tags):
-		j = 0
-
-	print()
-	i += 1
-
+		raise Next
+	except Prev:
+		print()
+		i -= 1
+		j = -1
+	except Next:	
+		print()
+		i += 1
+	else:
+		raise AssertionError
+	
 sys.exit(EXIT_SUCCESS)
