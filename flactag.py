@@ -152,6 +152,7 @@ while i < len(files):
 				# remove the tag name prefix, and only us the first value
 				value = value.splitlines()[0].partition("{tag}=".format(tag=tag))[2]
 	
+			orig = value
 			if value == "":
 				fastforward = False
 				if tag in last:
@@ -189,7 +190,7 @@ while i < len(files):
 					elif data == "*":
 						raise FastForward
 			
-				if data != value:
+				if data != orig:
 					ret = subprocess.Popen(["metaflac", "--remove-tag={tag}".format(tag=tag), "--", file]).wait()
 					check(name="metaflac", ret=ret, action="removing", tag=tag, file=file)
 	
