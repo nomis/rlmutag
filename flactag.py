@@ -3,7 +3,7 @@
 #
 #	flagtag - tags all flac files interactively in the current directory
 #
-#	Copyright ©2009 Simon Arlott
+#	Copyright ©2011 Simon Arlott
 #
 #	This program is free software; you can redistribute it and/or
 #	modify it under the terms of the GNU General Public License v2
