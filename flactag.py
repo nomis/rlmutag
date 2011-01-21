@@ -43,7 +43,7 @@ def get_history():
 def set_history(lines):
 	readline.clear_history()
 	for line in lines:
-		readline.add_history(line)
+		readline.add_history(line.encode('UTF-8'))
 
 def last_history(line):
 	if line == "":
@@ -51,7 +51,7 @@ def last_history(line):
 	if (readline.get_current_history_length() == 0
 			or readline.get_history_item(
 				readline.get_current_history_length()) != line):
-		readline.add_history(line)
+		readline.add_history(line.encode('UTF-8'))
 		return True
 	return False
 
@@ -144,7 +144,7 @@ while i < len(files):
 				set_history([])
 	
 			get_tags = subprocess.Popen(["metaflac", "--show-tag={tag}".format(tag=tag), "--", file], stdout=subprocess.PIPE)
-			value = get_tags.communicate()[0].decode()
+			value = get_tags.communicate()[0].decode('UTF-8')
 			ret = get_tags.wait()
 			check(name="metaflac", ret=ret, action="getting", tag=tag, file=file)
 	
@@ -167,7 +167,7 @@ while i < len(files):
 					data = value
 				else:
 					try:
-						data = raw_input(PROMPT.format(file=file, tag=tag, value=value))
+						data = raw_input(PROMPT.format(file=file, tag=tag, value=value.encode('UTF-8'))).decode('UTF-8')
 					except KeyboardInterrupt:
 						print()
 						sys.exit(EXIT_SUCCESS)
