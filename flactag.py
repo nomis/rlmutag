@@ -36,29 +36,29 @@ class FastForward(Exception): pass
 def get_history():
 	lines = []
 	for i in range(1, readline.get_current_history_length() + 1):
-		lines.append(readline.get_history_item(i))
+		lines.append(readline.get_history_item(i).decode("utf-8"))
 	return lines
 
 # python's readline module has no "list -> history" function
 def set_history(lines):
 	readline.clear_history()
 	for line in lines:
-		readline.add_history(line.encode('UTF-8'))
+		readline.add_history(line.encode("utf-8"))
 
 def last_history(line):
 	if line == "":
 		return False
 	if (readline.get_current_history_length() == 0
 			or readline.get_history_item(
-				readline.get_current_history_length()) != line):
-		readline.add_history(line.encode('UTF-8'))
+				readline.get_current_history_length()) != line.encode("utf-8")):
+		readline.add_history(line.encode("utf-8"))
 		return True
 	return False
 
 def cut_history(line):
 	if (readline.get_current_history_length() > 0
 			and readline.get_history_item(
-				readline.get_current_history_length()) == line):
+				readline.get_current_history_length()) == line.encode("utf-8")):
 		# not a mistake, getting is 1+, removing is 0+ ...
 		readline.remove_history_item(readline.get_current_history_length() - 1)
 
@@ -144,7 +144,7 @@ while i < len(files):
 				set_history([])
 	
 			get_tags = subprocess.Popen(["metaflac", "--show-tag={tag}".format(tag=tag), "--", file], stdout=subprocess.PIPE)
-			value = get_tags.communicate()[0].decode('UTF-8')
+			value = get_tags.communicate()[0].decode("utf-8")
 			ret = get_tags.wait()
 			check(name="metaflac", ret=ret, action="getting", tag=tag, file=file)
 	
@@ -163,11 +163,11 @@ while i < len(files):
 	
 				# fast forward or prompt for input
 				if fastforward:
-					print(PROMPT.format(file=file, tag=tag, value=value))
+					print(PROMPT.format(file=file, tag=tag, value=value.encode("utf-8")))
 					data = value
 				else:
 					try:
-						data = raw_input(PROMPT.format(file=file, tag=tag, value=value.encode('UTF-8'))).decode('UTF-8')
+						data = raw_input(PROMPT.format(file=file, tag=tag, value=value.encode("utf-8"))).decode("utf-8")
 					except KeyboardInterrupt:
 						print()
 						sys.exit(EXIT_SUCCESS)
@@ -195,7 +195,7 @@ while i < len(files):
 					check(name="metaflac", ret=ret, action="removing", tag=tag, file=file)
 	
 					if data != "":
-						ret = subprocess.Popen(["metaflac", "--set-tag={tag}={data}".format(tag=tag, data=data), "--", file]).wait()
+						ret = subprocess.Popen(["metaflac", "--set-tag={tag}={data}".format(tag=tag, data=data.encode("utf-8")), "--", file]).wait()
 						check(name="metaflac", ret=ret, action="setting", tag=tag, file=file)
 		
 				if data != "":
