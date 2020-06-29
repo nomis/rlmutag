@@ -190,11 +190,11 @@ while i < len(files):
 						raise FastForward
 			
 				if data != orig:
-					ret = subprocess.Popen(["metaflac", "--remove-tag={tag}".format(tag=tag), "--", file]).wait()
+					ret = subprocess.Popen(["metaflac", "--preserve-modtime", "--remove-tag={tag}".format(tag=tag), "--", file]).wait()
 					check(name="metaflac", ret=ret, action="removing", tag=tag, file=file)
 	
 					if data != "":
-						ret = subprocess.Popen(["metaflac", "--set-tag={tag}={data}".format(tag=tag, data=data.encode("utf-8")), "--", file]).wait()
+						ret = subprocess.Popen(["metaflac", "--preserve-modtime", "--set-tag={tag}={data}".format(tag=tag, data=data.encode("utf-8")), "--", file]).wait()
 						check(name="metaflac", ret=ret, action="setting", tag=tag, file=file)
 		
 				if data != "":
