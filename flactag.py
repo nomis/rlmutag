@@ -3,7 +3,7 @@
 #
 #	flagtag - tags all flac files interactively in the current directory
 #
-#	Copyright ©2011 Simon Arlott
+#	Copyright ©2011,2020 Simon Arlott
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -196,6 +196,10 @@ while i < len(files):
 					if data != "":
 						ret = subprocess.Popen(["metaflac", "--preserve-modtime", "--set-tag={tag}={data}".format(tag=tag, data=data.encode("utf-8")), "--", file]).wait()
 						check(name="metaflac", ret=ret, action="setting", tag=tag, file=file)
+
+					st = os.stat(file)
+					os.utime(file, (st.st_atime, st.st_mtime + 1))
+
 		
 				if data != "":
 					last[tag] = data
