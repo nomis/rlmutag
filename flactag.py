@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf-8
 #
 #	flagtag - tags all flac files interactively in the current directory
@@ -18,13 +18,12 @@
 #	You should have received a copy of the GNU General Public License
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function
 import os
 import readline
 import subprocess
 import sys
 
-EXIT_SUCCESS, EXIT_FAILURE, EXIT_USAGE = range(3)
+EXIT_SUCCESS, EXIT_FAILURE, EXIT_USAGE = list(range(3))
 PROMPT = "{file} {tag} [{value}]: "
 
 class Prev(Exception): pass
@@ -35,29 +34,29 @@ class FastForward(Exception): pass
 def get_history():
 	lines = []
 	for i in range(1, readline.get_current_history_length() + 1):
-		lines.append(readline.get_history_item(i).decode("utf-8"))
+		lines.append(readline.get_history_item(i))
 	return lines
 
 # python's readline module has no "list -> history" function
 def set_history(lines):
 	readline.clear_history()
 	for line in lines:
-		readline.add_history(line.encode("utf-8"))
+		readline.add_history(line)
 
 def last_history(line):
 	if line == "":
 		return False
 	if (readline.get_current_history_length() == 0
 			or readline.get_history_item(
-				readline.get_current_history_length()) != line.encode("utf-8")):
-		readline.add_history(line.encode("utf-8"))
+				readline.get_current_history_length()) != line):
+		readline.add_history(line)
 		return True
 	return False
 
 def cut_history(line):
 	if (readline.get_current_history_length() > 0
 			and readline.get_history_item(
-				readline.get_current_history_length()) == line.encode("utf-8")):
+				readline.get_current_history_length()) == line):
 		# not a mistake, getting is 1+, removing is 0+ ...
 		readline.remove_history_item(readline.get_current_history_length() - 1)
 
@@ -130,27 +129,27 @@ while i < len(files):
 		# skip files with no tags
 		if len(tags) == 0:
 			raise Next
-	
+
 		# if going back to previous file, use the last tag
 		if j == -1:
 			j = len(tags) - 1
-	
+
 		while j < len(tags):
 			tag = tags[j]
 			if tag in hist:
 				set_history(hist[tag])
 			else:
 				set_history([])
-	
-			get_tags = subprocess.Popen(["metaflac", "--show-tag={tag}".format(tag=tag), "--", file], stdout=subprocess.PIPE)
-			value = get_tags.communicate()[0].decode("utf-8")
+
+			get_tags = subprocess.Popen(["metaflac", "--show-tag={tag}".format(tag=tag), "--", file], stdout=subprocess.PIPE, encoding="utf-8")
+			value = get_tags.communicate()[0]
 			ret = get_tags.wait()
 			check(name="metaflac", ret=ret, action="getting", tag=tag, file=file)
-	
+
 			if value != "":
 				# remove the tag name prefix, and only us the first value
 				value = value.splitlines()[0].partition("{tag}=".format(tag=tag))[2]
-	
+
 			orig = value
 			if value == "":
 				fastforward = False
@@ -159,25 +158,25 @@ while i < len(files):
 			try:
 				# append this value if it's not there, so it can be edited
 				added = last_history(value)
-	
+
 				# fast forward or prompt for input
 				if fastforward:
-					print(PROMPT.format(file=file, tag=tag, value=value.encode("utf-8")))
+					print(PROMPT.format(file=file, tag=tag, value=value))
 					data = value
 				else:
 					try:
-						data = raw_input(PROMPT.format(file=file, tag=tag, value=value.encode("utf-8"))).decode("utf-8")
+						data = input(PROMPT.format(file=file, tag=tag, value=value))
 					except KeyboardInterrupt:
 						print()
 						sys.exit(EXIT_SUCCESS)
 					except EOFError:
 						print()
 						sys.exit(EXIT_SUCCESS)
-		
+
 					# remove the extra value if it got added but not used
 					if added and data != "" and data != value:
 						cut_history(value)
-		
+
 					if data == "":
 						data = value
 					elif data == "#":
@@ -188,23 +187,22 @@ while i < len(files):
 						raise Next
 					elif data == "*":
 						raise FastForward
-			
+
 				if data != orig:
-					ret = subprocess.Popen(["metaflac", "--preserve-modtime", "--remove-tag={tag}".format(tag=tag), "--", file]).wait()
+					ret = subprocess.Popen(["metaflac", "--preserve-modtime", "--remove-tag={tag}".format(tag=tag), "--", file], encoding="utf-8").wait()
 					check(name="metaflac", ret=ret, action="removing", tag=tag, file=file)
-	
+
 					if data != "":
-						ret = subprocess.Popen(["metaflac", "--preserve-modtime", "--set-tag={tag}={data}".format(tag=tag, data=data.encode("utf-8")), "--", file]).wait()
+						ret = subprocess.Popen(["metaflac", "--preserve-modtime", "--set-tag={tag}={data}".format(tag=tag, data=data), "--", file], encoding="utf-8").wait()
 						check(name="metaflac", ret=ret, action="setting", tag=tag, file=file)
 
 					st = os.stat(file)
 					os.utime(file, (st.st_atime, st.st_mtime + 1))
 
-		
 				if data != "":
 					last[tag] = data
 				hist[tag] = get_history()
-	
+
 				raise Next
 			except Prev:
 				if j > 0:
@@ -217,18 +215,18 @@ while i < len(files):
 				fastforward = True
 			else:
 				raise AssertionError
-	
+
 		raise Next
 	except Prev:
 		print()
 		if i > 0:
 			i -= 1
 			j = -1
-	except Next:	
+	except Next:
 		print()
 		i += 1
 		j = 0
 	else:
 		raise AssertionError
-	
+
 sys.exit(EXIT_SUCCESS)
