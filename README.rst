@@ -4,7 +4,7 @@ Usage::
 
 Example::
 
-    ~/music/BBC Radio 2 - Sounds of the 80s/I Think We're Alone Now (1987-1989) $ flactag ARTIST TITLE -- *.flac
+    $ flactag ARTIST TITLE -- *.flac
     CD01TR01.flac ARTIST []: Tiffany
     CD01TR01.flac TITLE []: I Think We're Alone Now 
     
