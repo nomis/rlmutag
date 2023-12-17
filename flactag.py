@@ -3,7 +3,7 @@
 #
 #	flagtag - tags all flac files interactively in the current directory
 #
-#	Copyright ©2011,2020 Simon Arlott
+#	Copyright ©2011,2020,2023 Simon Arlott
 #
 #	This program is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -99,6 +99,10 @@ if not auto_tags:
 		if tag != "" and tag not in uniq:
 			uniq.add(tag)
 			tags.append(tag)
+
+		if tag.endswith(".flac"):
+			print(f"Unexpected tag: {tag}")
+			sys.exit(EXIT_USAGE)
 	del uniq
 
 last = {}
